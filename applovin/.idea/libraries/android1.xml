@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="android1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/android/applovin-sdk-9.13.3-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/android/applovin-sdk-9.13.3-sources.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

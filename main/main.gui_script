@@ -1,0 +1,22 @@
+local dirtylarry = require "dirtylarry/dirtylarry"
+
+function init(self)
+	msg.post(".", "acquire_input_focus")
+end
+
+local function rewarded_ad_callback(self, event_id, result, error)
+	print("Event id", event_id)
+	pprint(result)
+	pprint(error)
+end
+
+function on_input(self, action_id, action)
+	dirtylarry:button("btn_create_rewarded", action_id, action, function () 
+		applovin.createRewardedAd("AD_UNIT_ID_HERE", rewarded_ad_callback)
+	end)
+
+	dirtylarry:button("btn_show_rewarded", action_id, action, function ()
+		applovin.showRewardedAd()
+	end)
+end
+
