@@ -83,7 +83,7 @@ static void Detach()
             g_Applovin.m_CreateRewardedAd = env->GetMethodID(applovin_class, "createRewardedAd", "(Ljava/lang/String;J)V");
             g_Applovin.m_LoadRewardedAd = env->GetMethodID(applovin_class, "loadRewardedAd", "()V");
             g_Applovin.m_ShowRewardedAd = env->GetMethodID(applovin_class, "showRewardedAd", "()V");
-            g_Applovin.m_InitSdk = env->GetMethodID(applovin_class, "initSdk", "()V");
+            g_Applovin.m_InitSdk = env->GetMethodID(applovin_class, "initSdk", "(ZLjava/lang/String;)V");
 
             Detach();
         }
@@ -91,11 +91,14 @@ static void Detach()
         return dmExtension::RESULT_OK;
     }
 
-    dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params)
+    dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params, const bool verbose_logs, const char* test_device_id)
     {
         dmApplovin::QueueCreate(&g_Applovin.m_EventQueue);
         JNIEnv* env = Attach();
-        env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_InitSdk);
+
+        jstring str_test_device_id = env->NewStringUTF(test_device_id);
+        env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_InitSdk, verbose_logs, str_test_device_id);
+        env->DeleteLocalRef(str_test_device_id);
         Detach();
         return dmExtension::RESULT_OK;
     }

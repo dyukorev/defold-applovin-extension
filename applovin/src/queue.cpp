@@ -74,7 +74,6 @@ namespace dmApplovin
 
     void EventHandler(ApplovinEvent* event, void* ctx)
     {
-        dmLogError("Processing event %d", event->m_Type);
         // Checking that we're in the correct context (in case of a non shared Lua state)
         lua_State* L = dmScript::GetCallbackLuaContext(event->m_Callback);
         int top = lua_gettop(L);

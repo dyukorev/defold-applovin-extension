@@ -27,9 +27,22 @@ public class Applovin implements AppLovinSdk.SdkInitializationListener {
     }
 
     public void initSdk() {
+        initSdk(false, null);
+    }
+
+    public void initSdk(boolean verbosLogging) {
+        initSdk(verbosLogging, null);
+    }
+
+    public void initSdk(boolean verboseLogging, String testDeviceAdId) {
         AppLovinSdk.getInstance( this.activity ).setMediationProvider( mediationProvider );
-        AppLovinSdk.getInstance( this.activity ).getSettings().setVerboseLogging( true );
-        AppLovinSdk.getInstance( this.activity ).getSettings().setTestDeviceAdvertisingIds(Arrays.asList("1b4e91e5-f586-4e86-9943-d2c67383ca78"));
+        if (verboseLogging) {
+            AppLovinSdk.getInstance( this.activity ).getSettings().setVerboseLogging( true );
+        }
+        if ( testDeviceAdId != null && !testDeviceAdId.isEmpty()) {
+            Log.d(TAG, "APPLOVINEXT: Test device is setup to " + testDeviceAdId);
+            AppLovinSdk.getInstance( this.activity ).getSettings().setTestDeviceAdvertisingIds(Arrays.asList(testDeviceAdId));
+        }
         AppLovinSdk.initializeSdk( this.activity, this );
     }
 

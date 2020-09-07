@@ -49,4 +49,4 @@ scale = 0.01
 
 [applovin]
 sdk_key = SDK_KEY
-
+verbose = 1

@@ -6,7 +6,7 @@
 
 dmExtension::Result Platform_AppInitializeApplovin(dmExtension::AppParams* params, const char* mediation_provider);
 dmExtension::Result Platform_AppFinalizeApplovin(dmExtension::AppParams* params);
-dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params);
+dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params, const bool verbose_logs, const char* test_device_id);
 dmExtension::Result Platform_FinalizeApplovin(dmExtension::Params* params);
 dmExtension::Result Platform_UpdateApplovin(dmExtension::Params* params);
 void                Platform_OnEventApplovin(dmExtension::Params* params, const dmExtension::Event* event);

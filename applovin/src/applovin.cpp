@@ -46,7 +46,6 @@ static const luaL_reg Applovin_methods[] = {
 static void LuaInit(lua_State* L)
 {
     printf("LuaInit %s Extension\n", MODULE_NAME);
-    dmLogError("LuaInit Applovin Extension");
     int top = lua_gettop(L);
     luaL_register(L, MODULE_NAME, Applovin_methods);
 
@@ -86,8 +85,10 @@ static dmExtension::Result AppFinalizeApplovin(dmExtension::AppParams* params)
 static dmExtension::Result InitializeApplovin(dmExtension::Params* params)
 {
     printf("Registered %s Extension\n", MODULE_NAME);
+    const bool verbose_logs = dmConfigFile::GetInt(params->m_ConfigFile, "applovin.verbose", 0);
+    const char* test_device_id = dmConfigFile::GetString(params->m_ConfigFile, "applovin.test_device_id", "\0");
     LuaInit(params->m_L);
-    return Platform_InitializeApplovin(params);
+    return Platform_InitializeApplovin(params, verbose_logs, test_device_id);
 }
 
 static dmExtension::Result FinalizeApplovin(dmExtension::Params* params)
