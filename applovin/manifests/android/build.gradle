@@ -1,3 +1,6 @@
 dependencies {
-    implementation 'com.applovin:applovin-sdk:+'
+    implementation 'com.applovin:applovin-sdk:9.13.5'
+    implementation 'com.applovin.mediation:facebook-adapter:+'
+    implementation 'com.android.support:recyclerview-v7:28.+'
+    implementation 'com.android.support:appcompat-v7:28.+'
 }

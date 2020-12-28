@@ -21,6 +21,7 @@ struct Applovin {
     jmethodID m_LoadRewardedAd;
     jmethodID m_ShowRewardedAd;
     jmethodID m_InitSdk;
+    bool m_VerboseLogs;
 
     dmApplovin::EventQueue m_EventQueue;
 };
@@ -83,7 +84,7 @@ static void Detach()
             g_Applovin.m_CreateRewardedAd = env->GetMethodID(applovin_class, "createRewardedAd", "(Ljava/lang/String;J)V");
             g_Applovin.m_LoadRewardedAd = env->GetMethodID(applovin_class, "loadRewardedAd", "()V");
             g_Applovin.m_ShowRewardedAd = env->GetMethodID(applovin_class, "showRewardedAd", "()V");
-            g_Applovin.m_InitSdk = env->GetMethodID(applovin_class, "initSdk", "(ZLjava/lang/String;)V");
+            g_Applovin.m_InitSdk = env->GetMethodID(applovin_class, "initSdk", "(Z)V");
 
             Detach();
         }
@@ -91,15 +92,10 @@ static void Detach()
         return dmExtension::RESULT_OK;
     }
 
-    dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params, const bool verbose_logs, const char* test_device_id)
+    dmExtension::Result Platform_InitializeApplovin(dmExtension::Params* params, bool verbose_logs)
     {
         dmApplovin::QueueCreate(&g_Applovin.m_EventQueue);
-        JNIEnv* env = Attach();
-
-        jstring str_test_device_id = env->NewStringUTF(test_device_id);
-        env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_InitSdk, verbose_logs, str_test_device_id);
-        env->DeleteLocalRef(str_test_device_id);
-        Detach();
+        g_Applovin.m_VerboseLogs = verbose_logs;
         return dmExtension::RESULT_OK;
     }
 
@@ -118,15 +114,14 @@ static void Detach()
         return dmExtension::RESULT_OK;
     }
 
-    dmExtension::Result Platform_UpdateApplovin(dmExtension::Params* params)
+    dmExtension::Result Platform_UpdateApplovin(dmExtension::Params* params, dmApplovin::ApplovinListener* listener)
     {
-        dmApplovin::QueueFlush(&g_Applovin.m_EventQueue, (void*)params->m_L);
+        dmApplovin::QueueFlush(&g_Applovin.m_EventQueue, listener);
         return dmExtension::RESULT_OK;
     }
 
     void Platform_OnEventApplovin(dmExtension::Params* params, const dmExtension::Event* event)
     {
-
     }
 
 #ifdef __cplusplus
@@ -230,11 +225,17 @@ extern "C" {
 }
 #endif
 
-    void Platform_createRewardedAd(lua_State* L, dmScript::LuaCallbackInfo* listener, const char* adUnitId) {
+    void Platform_initSdk(lua_State* L) {
+            JNIEnv* env = Attach();
+            env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_InitSdk, g_Applovin.m_VerboseLogs);
+            Detach();
+    }
+
+    void Platform_createRewardedAd(lua_State* L, const char* adUnitId) {
         JNIEnv* env = Attach();
 
         jstring str_adUnitId = env->NewStringUTF(adUnitId);
-        env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_CreateRewardedAd, str_adUnitId, (jlong) listener);
+        env->CallVoidMethod(g_Applovin.m_ApplovinJava, g_Applovin.m_CreateRewardedAd, str_adUnitId, 0);
         env->DeleteLocalRef(str_adUnitId);
         Detach();
     }

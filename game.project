@@ -48,5 +48,6 @@ gravity_y = -1000.0
 scale = 0.01
 
 [applovin]
-sdk_key = SDK_KEY
+sdk_key = TweUV_JIs7t-gxcZI3nI39zTGRTnot0S9NH67DZq2x8W6K_Ai-AOONdC8mseAKnTSAbQ0RbwwIT1ABpaM7ZMlF
 verbose = 1
+

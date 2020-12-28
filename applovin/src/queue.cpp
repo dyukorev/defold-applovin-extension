@@ -28,12 +28,16 @@ namespace dmApplovin
         queue->m_Events.Push(*event);
     }
 
-    void QueueFlush(EventQueue* queue, void* ctx)
+    void QueueFlush(EventQueue* queue, ApplovinListener* m_Callback)
     {
         if (queue->m_Events.Empty())
             return;
         DM_MUTEX_SCOPED_LOCK(queue->m_Mutex);
-        queue->m_Events.Map(dmApplovin::EventHandler, ctx);
+        for(uint32_t i = 0; i != queue->m_Events.Size(); ++i)
+        {
+            ApplovinEvent event = queue->m_Events[i];
+            EventHandler(&event, m_Callback);
+        }
         queue->m_Events.SetSize(0);
     }
 
@@ -72,29 +76,69 @@ namespace dmApplovin
         }
     }
 
-    void EventHandler(ApplovinEvent* event, void* ctx)
+    void EventHandler(ApplovinEvent* event, ApplovinListener* cbk)
     {
-        // Checking that we're in the correct context (in case of a non shared Lua state)
-        lua_State* L = dmScript::GetCallbackLuaContext(event->m_Callback);
-        int top = lua_gettop(L);
-
-        DM_LUA_STACK_CHECK(L, 0);
-
-        if (!dmScript::SetupCallback(event->m_Callback)) {
-            assert(top == lua_gettop(L));
+        dmLogWarning("Handle event %d", event->m_Type);
+        if(cbk->m_Callback == LUA_NOREF)
+        {
+            dmLogWarning("No ref on callback");
             return;
         }
+
+        lua_State* L = cbk->m_L;
+        int top = lua_gettop(L);
+
+        lua_rawgeti(L, LUA_REGISTRYINDEX, cbk->m_Callback);
+
+        // Setup self (the script instance)
+        lua_rawgeti(L, LUA_REGISTRYINDEX, cbk->m_Self);
+        lua_pushvalue(L, -1);
+
+        dmScript::SetInstance(L);
+
         lua_pushnumber(L, event->m_Type);
         pushResult(L, event);
         pushError(L, event->m_Error, event->m_ErrorCode);
 
-        dmScript::PCall(L, 4, 0);
+        int number_of_arguments = 4; // instance + 2
+        int ret = lua_pcall(L, number_of_arguments, 0, 0);
+        if(ret != 0) {
+            dmLogError("Error running callback: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+        }
 
         free((void*)event->m_Results);
         free((void*)event->m_Error);
-        dmScript::TeardownCallback(event->m_Callback);
 
         assert(top == lua_gettop(L));
     }
 
+    void RegisterCallback(lua_State* L, int index, ApplovinListener* cbk)
+    {
+        dmLogWarning("Register callback");
+        if(cbk->m_Callback != LUA_NOREF)
+        {
+            dmScript::Unref(cbk->m_L, LUA_REGISTRYINDEX, cbk->m_Callback);
+            dmScript::Unref(cbk->m_L, LUA_REGISTRYINDEX, cbk->m_Self);
+        }
+
+        cbk->m_L = L;
+
+        luaL_checktype(L, index, LUA_TFUNCTION);
+        lua_pushvalue(L, index);
+        cbk->m_Callback = dmScript::Ref(L, LUA_REGISTRYINDEX);
+
+        dmScript::GetInstance(L);
+        cbk->m_Self = dmScript::Ref(L, LUA_REGISTRYINDEX);
+    }
+
+    void UnregisterCallback(ApplovinListener* cbk)
+    {
+        if(cbk->m_Callback != LUA_NOREF)
+        {
+            dmScript::Unref(cbk->m_L, LUA_REGISTRYINDEX, cbk->m_Callback);
+            dmScript::Unref(cbk->m_L, LUA_REGISTRYINDEX, cbk->m_Self);
+            cbk->m_Callback = LUA_NOREF;
+        }
+    }
 }

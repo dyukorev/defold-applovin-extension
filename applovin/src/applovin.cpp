@@ -1,4 +1,4 @@
-#if defined(DM_PLATFORM_ANDROID) || defined(DM_PLATFORM_IOS)
+#if defined(DM_PLATFORM_ANDROID)
 
 #include "queue.h"
 #include "applovin.h"
@@ -8,16 +8,22 @@
 #define MODULE_NAME "applovin"
 #define LIB_NAME "Applovin"
 
+static dmApplovin::ApplovinListener m_Callback;
+
+static int Applovin_initSdk(lua_State* L)
+{
+    Platform_initSdk(L);
+    return 0;
+}
+
 static int Applovin_createRewardedAd(lua_State* L)
 {
     DM_LUA_STACK_CHECK(L, 0);
 
     luaL_checktype(L, 1, LUA_TSTRING);
     const char* ad_unit_id = luaL_checkstring(L, 1);
-    dmScript::LuaCallbackInfo* callback = dmScript::CreateCallback(L, 2);
-
-
-    Platform_createRewardedAd(L, callback, ad_unit_id);
+    dmApplovin::RegisterCallback(L, 2, &m_Callback);
+    Platform_createRewardedAd(L, ad_unit_id);
     return 0;
 }
 
@@ -37,6 +43,7 @@ static const luaL_reg Applovin_methods[] = {
     //{"createInterstitialAd", Applovin_createInterstitialAd},
     //{"loadInterstitialAd", Applovin_loadInterstitialAd},
     //{"showInterstitialAd", Applovin_showInterstitialAd},
+    {"initSdk", Applovin_initSdk},
     {"createRewardedAd", Applovin_createRewardedAd},
     {"loadRewardedAd", Applovin_loadRewardedAd},
     {"showRewardedAd", Applovin_showRewardedAd},
@@ -73,6 +80,7 @@ static void LuaInit(lua_State* L)
 
 static dmExtension::Result AppInitializeApplovin(dmExtension::AppParams* params)
 {
+    dmLogWarning("Applovin Extension app init");
     const char* mediation_provider = dmConfigFile::GetString(params->m_ConfigFile, "applovin.mediation_provider", "max");
     return Platform_AppInitializeApplovin(params, mediation_provider);
 }
@@ -84,11 +92,10 @@ static dmExtension::Result AppFinalizeApplovin(dmExtension::AppParams* params)
 
 static dmExtension::Result InitializeApplovin(dmExtension::Params* params)
 {
-    printf("Registered %s Extension\n", MODULE_NAME);
-    const bool verbose_logs = dmConfigFile::GetInt(params->m_ConfigFile, "applovin.verbose", 0);
-    const char* test_device_id = dmConfigFile::GetString(params->m_ConfigFile, "applovin.test_device_id", "\0");
+    dmLogWarning("Registered %s Extension", MODULE_NAME);
+    bool verbose_logs = dmConfigFile::GetInt(params->m_ConfigFile, "applovin.verbose", 0);
     LuaInit(params->m_L);
-    return Platform_InitializeApplovin(params, verbose_logs, test_device_id);
+    return Platform_InitializeApplovin(params, verbose_logs);
 }
 
 static dmExtension::Result FinalizeApplovin(dmExtension::Params* params)
@@ -98,7 +105,7 @@ static dmExtension::Result FinalizeApplovin(dmExtension::Params* params)
 
 static dmExtension::Result UpdateApplovin(dmExtension::Params* params)
 {
-    return Platform_UpdateApplovin(params);
+    return Platform_UpdateApplovin(params, &m_Callback);
 }
 
 static void OnEventApplovin(dmExtension::Params* params, const dmExtension::Event* event)
@@ -112,4 +119,4 @@ extern "C" void ApplovinExt()
 {
 }
 
-#endif //defined(DM_PLATFORM_ANDROID) || defined(DM_PLATFORM_IOS) || defined(DM_PLATFORM_HTML5)
+#endif //defined(DM_PLATFORM_ANDROID)

@@ -44,12 +44,22 @@ namespace dmApplovin {
         dmMutex::HMutex             m_Mutex;
     };
 
+    struct ApplovinListener
+    {
+        ApplovinListener() : m_L(0), m_Callback(LUA_NOREF), m_Self(LUA_NOREF) {}
+        lua_State* m_L;
+        int        m_Callback;
+        int        m_Self;
+    };
+
     typedef void (*ApplovinProcessingFn)(ApplovinEvent* event, void* ctx);
 
     void QueueCreate(EventQueue* queue);
     void QueueDestroy(EventQueue* queue);
     void QueuePush(EventQueue* queue, ApplovinEvent* event);
-    void QueueFlush(EventQueue* queue, void* ctx);
+    void QueueFlush(EventQueue* queue, ApplovinListener* cbk);
 
-    void EventHandler(ApplovinEvent* event, void* ctx);
+    void EventHandler(ApplovinEvent* event, ApplovinListener* cbk);
+    void RegisterCallback(lua_State* L, int index, ApplovinListener* cbk);
+    void UnregisterCallback(ApplovinListener* cbk);
 }
